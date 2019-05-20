@@ -24,6 +24,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer,Tf
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import recall_score
+from sklearn.metrics import precision_score
 
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.preprocessing import StandardScaler
@@ -32,13 +33,15 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import make_scorer
 from sklearn.base import BaseEstimator, TransformerMixin
+import pickle
 
 def load_data(database_filepath):
-    engine=create_engine('sqlite:///'+file_path)
+    engine=create_engine('sqlite:///'+database_filepath)
     df=pd.read_sql_table('cleaned_messages',con=engine)  
     X=df['message']
     y=df.iloc[:,4::]
-    return X,y
+    category_names=y.columns.tolist()
+    return X,y,category_names
 
 
 def tokenize(text):
@@ -81,11 +84,17 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    pass
+        Y_test_pred=model.predict(X_test)
+        for i in range(len(category_names)):   
+            f1score=f1_score(Y_test.iloc[:,i],Y_test_pred[:,i])
+            precisionscore=precision_score(Y_test.iloc[:,i],Y_test_pred[:,i])
+            recallscore=recall_score(Y_test.iloc[:,i],Y_test_pred[:,i])
+            print("For category '{}', \nf1-score:{} \nprecion:{} \nrecall:{} \n".
+                 format(category_names[i],f1score,precisionscore,recallscore))
 
 
 def save_model(model, model_filepath):
-    pass
+    pickle.dump(model,open(model_filepath,'wb'))
 
 
 def main():

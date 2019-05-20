@@ -26,12 +26,25 @@ def tokenize(text):
     return clean_tokens
 
 # load data
-engine = create_engine('sqlite:///../data/YourDatabaseName.db')
-df = pd.read_sql_table('YourTableName', engine)
+engine = create_engine('sqlite:///../data/disaster_response.db')
+df = pd.read_sql_table('cleaned_messages', engine)
 
 # load model
-model = joblib.load("../models/your_model_name.pkl")
+# model = joblib.load("../models/classifier.pkl")
+from sklearn.base import BaseEstimator, TransformerMixin
+import pickle
+class array_transformer(BaseEstimator, TransformerMixin):
 
+    def fit(self, x, y=None):
+        return self
+
+    def transform(self, X):
+        X_array = X.toarray()
+        return X_array
+
+
+
+model=pickle.load(open("../models/classifier.pkl",'rb'))
 
 # index webpage displays cool visuals and receives user input text for model
 @app.route('/')
