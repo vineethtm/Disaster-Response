@@ -36,6 +36,15 @@ from sklearn.base import BaseEstimator, TransformerMixin
 import pickle
 
 def load_data(database_filepath):
+    """ load the data from the database and returns splitted data
+    args:
+    database_filepath: name of the database
+    returns:
+    X: message dataframe
+    y: category columns
+    categories: category names
+    """
+    
     engine=create_engine('sqlite:///'+database_filepath)
     df=pd.read_sql_table('cleaned_messages',con=engine)  
     X=df['message']
@@ -45,6 +54,12 @@ def load_data(database_filepath):
 
 
 def tokenize(text):
+    """ tokenise the text
+    Args: 
+    text:text to be tokenized
+    Returns:
+    clean tokens: tokenised text
+    """   
     text=re.sub(r"[^a-zA-Z0-9]"," ",text)
     tokens=word_tokenize(text)   
     stop_words=stopwords.words('english') 
@@ -57,6 +72,7 @@ def tokenize(text):
     return clean_tokens
 
 class array_transformer(BaseEstimator, TransformerMixin):
+    """ convert a list to array"""
 
     def fit(self, x, y=None):
         return self
@@ -69,6 +85,11 @@ f1_scorer=make_scorer(f1_score,average='weighted')
 
 
 def build_model():
+    """ Build a model
+    Main steps: vectorize the text, perform PCA and apply Decions tree classifier
+    Returns:
+    cv: best model
+   """
     pipeline=Pipeline([('tfidfvect',TfidfVectorizer(tokenizer=tokenize)),
                    ('toarray',array_transformer()),
                   ('scaler',StandardScaler()),('pca',PCA()),
@@ -84,16 +105,31 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
-        Y_test_pred=model.predict(X_test)
-        for i in range(len(category_names)):   
-            f1score=f1_score(Y_test.iloc[:,i],Y_test_pred[:,i])
-            precisionscore=precision_score(Y_test.iloc[:,i],Y_test_pred[:,i])
-            recallscore=recall_score(Y_test.iloc[:,i],Y_test_pred[:,i])
-            print("For category '{}', \nf1-score:{} \nprecion:{} \nrecall:{} \n".
-                 format(category_names[i],f1score,precisionscore,recallscore))
+    """ Evaluate the performance of the trained model on test set
+    Args:
+    model: trained model
+    X_test: Test data
+    Y_test: Values for the different catgories of the test data
+    category_names: Names of different categories
+    Returns:
+    print the f1 score, precision & recall for each categories
+    """"  
+    Y_test_pred=model.predict(X_test)
+    for i in range(len(category_names)):   
+        f1score=f1_score(Y_test.iloc[:,i],Y_test_pred[:,i])
+        precisionscore=precision_score(Y_test.iloc[:,i],Y_test_pred[:,i])
+        recallscore=recall_score(Y_test.iloc[:,i],Y_test_pred[:,i])
+        print("For category '{}', \nf1-score:{} \nprecion:{} \nrecall:{} \n".
+             format(category_names[i],f1score,precisionscore,recallscore))
 
 
 def save_model(model, model_filepath):
+    """ Save the final model
+    Args:
+    model: final model
+    model_filepath: file name and path
+    """
+    
     pickle.dump(model,open(model_filepath,'wb'))
 
 
